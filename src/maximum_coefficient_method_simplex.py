@@ -1,5 +1,7 @@
 import numpy as np
 
+from src.lib.check_degeneracy import check_degeneracy, find_min_index_basis
+
 error = 1.0e-10  # 許容誤差
 
 
@@ -17,10 +19,54 @@ def lp_simplex(A, b, c):
 
     iter = 0
 
+    degeneration_flag = False
+
     while True:
         # 基本解の計算
+        if iter > 5:
+            break
+        print("iter = ", iter)
         x = np.zeros(n + m)
         x[basis] = np.linalg.solve(Ai[:, basis], b)
+
+        degenerate_indices = check_degeneracy(x[basis])
+
+        if degeneration_flag:
+            if len(degenerate_indices) > 0:
+                min_index_basis = find_min_index_basis(basis, degenerate_indices)
+            else:
+                min_index_basis = np.argmin(nonbasis)
+            min_index_nonbasis = np.argmin(nonbasis)
+            print("--------------------------------")
+            print("nonbasis = ", nonbasis)
+            print("basis = ", basis)
+            print("x[basis] = ", x[basis])
+            print("check_degeneracy(x[basis]) = ", degenerate_indices)
+            print("min_index_nonbasis = ", min_index_nonbasis)
+            print("min_index_basis = ", min_index_basis)
+            print("--------------------------------")
+            nonbasis[min_index_nonbasis], basis[min_index_basis] = (
+                basis[min_index_basis],
+                nonbasis[min_index_nonbasis],
+            )
+
+        if degeneration_flag is False and degenerate_indices.size > 0:
+            print("--------------------------------")
+            print("nonbasis = ", nonbasis)
+            print("basis = ", basis)
+            print("x[basis] = ", x[basis])
+            print("check_degeneracy(x[basis]) = ", degenerate_indices)
+            print("degeneracy detected")
+            min_index_nonbasis = np.argmin(nonbasis)
+            print("min_index_nonbasis = ", min_index_nonbasis)
+            min_index_basis = find_min_index_basis(basis, degenerate_indices)
+            print("min_index_basis = ", min_index_basis)
+            print("--------------------------------")
+            degeneration_flag = True
+            nonbasis[min_index_nonbasis], basis[min_index_basis] = (
+                basis[min_index_basis],
+                nonbasis[min_index_nonbasis],
+            )
         bb = np.linalg.solve(Ai[:, basis], b)  # 非効率な計算
 
         # 双対変数の計算
@@ -47,7 +93,7 @@ def lp_simplex(A, b, c):
             print("problem is unbounded")
             break
         else:
-            if iter % 50 == 0:
+            if iter % 50 == 0 and iter > 0:
                 print("iter: {}".format(iter))
                 print("current obj.val. = {}".format(x[basis] @ c0[basis]))
 
@@ -60,15 +106,19 @@ def lp_simplex(A, b, c):
 
             # 出る変数の決定
             r = np.argmin(ratio)
-
-            nonbasis[s], basis[r] = basis[r], nonbasis[s]
+            
+            if degeneration_flag is False:
+                nonbasis[s], basis[r] = basis[r], nonbasis[s]
 
             iter += 1
 
 
 if __name__ == "__main__":
-    A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
-    b = np.array([4, 8, 6])
-    c = np.array([3, 4, 2])
+    # A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
+    # b = np.array([4, 8, 6])
+    # c = np.array([3, 4, 2])
+    A = np.array([[1, 12, -2, -12], [0.25, 1, -0.25, -2], [1, -4, 0, -8]])
+    b = np.array([0, 0, 1])
+    c = np.array([1, -4, 0, -8])
 
     lp_simplex(A, b, c)
