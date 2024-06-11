@@ -33,6 +33,9 @@ def lp_simplex(A, b, c):
         # compute dual-variable
         y = np.linalg.solve(Ai[:, basis].T, c0[basis])
 
+        print("Ai[:, basis] = ", Ai[:, basis])
+        print("Ai[:, nonbasis] = ", Ai[:, nonbasis])
+
         # compute reduced-cost
         rc = c0[nonbasis] - y @ Ai[:, nonbasis]
         # print("reduced-cost = {}".format(rc))
@@ -51,7 +54,7 @@ def lp_simplex(A, b, c):
         d = np.linalg.solve(
             Ai[:, basis], Ai[:, nonbasis[s]]
         )  # obtain a column correspoding to s
-        # print("d = {}".format(d))
+        print("d = {}".format(d))
 
         # check unboundedness
         if np.all(d <= error):
