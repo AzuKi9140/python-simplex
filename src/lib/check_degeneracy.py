@@ -1,10 +1,11 @@
 import numpy as np
 
+error = 1.0e-10
 
 def check_degeneracy(
     x_basis: np.array,
 ):
-    return np.where(x_basis == 0)[0]
+    return np.where(x_basis < error)[0]
 
 
 def find_min_index_basis(basis, degenerate_indices):
