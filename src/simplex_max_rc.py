@@ -37,6 +37,7 @@ def print_simplex_detail(
         print(f"r = {r}")
 
 def lp_simplex(A, b, c):
+
     (m, n) = A.shape  # m:制約条件数, n:変数数
     print("m = {}, n = {}".format(m, n))
 
@@ -68,30 +69,19 @@ def lp_simplex(A, b, c):
             print("x = {}".format(x))
             print("---------------------------------------------------------------------------")
             break
-
-        # 入る変数の決定(最急降下)
-        s = -1
-        d = None
-        max_si = -np.inf
-        for i in range(len(rc)):
-            if rc[i] > error:
-                tmp = np.linalg.solve(Ai[:, basis], Ai[:, nonbasis[i]])
-                norm = np.sqrt(1 + np.sum(tmp**2))
-                si = rc[i] / norm
-                if si > max_si:
-                    max_si = si
-                    s = i
-                    d = tmp
-
-        if s == -1:
-            print("no entering variable found, optimal solution found")
-            break
+        
+        # 入る変数の決定(最大係数)
+        s = np.argmax(rc)
+        d = np.linalg.solve(
+            Ai[:, basis], Ai[:, nonbasis[s]]
+        )
 
         # 非有界性のチェック
         if np.all(d <= error):
             print("problem is unbounded")
             break
-
+            
+        # 出る変数の決定
         ratio = []
         for i in range(len(d)):
             if d[i] > error:
@@ -99,14 +89,13 @@ def lp_simplex(A, b, c):
             else:
                 ratio.append(np.inf)
 
-        # 出る変数の決定
         r = np.argmin(ratio)
 
         nonbasis[s], basis[r] = basis[r], nonbasis[s]
 
         if iter % 50 == 0:
-            print("iter: {}".format(iter))
-            print("current obj.val. = {}".format(x[basis] @ c0[basis]))
+                print("iter: {}".format(iter))
+                print("current obj.val. = {}".format(x[basis] @ c0[basis]))
         iter += 1
 
 if __name__ == "__main__":
@@ -117,7 +106,7 @@ if __name__ == "__main__":
     lp_simplex(A, b, c)
 
     # 巡回する例
-    A = np.array([[1, 12, -2, -12], [0.25, 1, -0.25, -2], [1, -4, 0, -8]])
-    b = np.array([0, 0, 1])
-    c = np.array([1, -4, 0, -8])
-    lp_simplex(A, b, c)
+    #A = np.array([[1, 12, -2, -12], [0.25, 1, -0.25, -2], [1, -4, 0, -8]])
+    #b = np.array([0, 0, 1])
+    #c = np.array([1, -4, 0, -8])
+    #lp_simplex(A, b, c)

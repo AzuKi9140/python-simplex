@@ -2,6 +2,40 @@ import numpy as np
 
 error = 1.0e-10  # 許容誤差
 
+def print_simplex_detail(
+        iter=None, 
+        m=None, 
+        n=None, 
+        basis=None, 
+        nonbasis=None,
+        x_b=None,
+        y=None,
+        rc=None,
+        s=None,
+        d=None,
+        r=None,
+        ):
+    if iter is not None:
+        print(f"iter = {iter}")
+    if m is not None and n is not None:
+        print(f"(m, n) = {(m, n)}")
+    if basis is not None:
+        print(f"basis = {basis}")
+    if nonbasis is not None:
+        print(f"nonbasis = {nonbasis}")
+    if y is not None:
+        print(f"y = {y}")
+    if rc is not None:
+        print(f"rc = {rc}")
+    if s is not None:
+        print(f"s = {s}")
+    if d is not None:
+        print(f"d = {d}")
+    if x_b is not None:
+        print(f"x_basis = {x_b}")
+    if r is not None:
+        print(f"r = {r}")
+
 def lp_simplex(A, b, c):
     (m, n) = A.shape  # m:制約条件数, n:変数数
     print("m = {}, n = {}".format(m, n))
@@ -28,10 +62,11 @@ def lp_simplex(A, b, c):
 
         # 最適性のチェック（双対可能性）
         if np.all(rc <= error):
-            print("number of iterations = {}".format(iter))
-            print("optimal solution found")
+            print("--optimal solution found---------------------------------------------------")
+            print_simplex_detail(iter=iter, basis=basis, nonbasis=nonbasis, rc=rc, x_b=x[basis])
             print("obj.val. = {}".format(c0[basis] @ x[basis]))
-            print(x[0:n])
+            print("x = {}".format(x))
+            print("---------------------------------------------------------------------------")
             break
 
         # 入る変数の決定(最大改善)
@@ -56,10 +91,6 @@ def lp_simplex(A, b, c):
             print("problem is unbounded")
             break
 
-        if iter % 50 == 0:
-            print("iter: {}".format(iter))
-            print("current obj.val. = {}".format(x[basis] @ c0[basis]))
-
         ratio = []
         for i in range(len(d)):
             if d[i] > error:
@@ -72,11 +103,20 @@ def lp_simplex(A, b, c):
 
         nonbasis[s], basis[r] = basis[r], nonbasis[s]
 
+        if iter % 50 == 0:
+                print("iter: {}".format(iter))
+                print("current obj.val. = {}".format(x[basis] @ c0[basis]))
         iter += 1
 
 if __name__ == "__main__":
+    # 例題
     A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
     b = np.array([4, 8, 6])
     c = np.array([3, 4, 2])
-
     lp_simplex(A, b, c)
+
+    # 巡回する例
+    #A = np.array([[1, 12, -2, -12], [0.25, 1, -0.25, -2], [1, -4, 0, -8]])
+    #b = np.array([0, 0, 1])
+    #c = np.array([1, -4, 0, -8])
+    #lp_simplex(A, b, c)

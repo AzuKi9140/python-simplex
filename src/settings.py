@@ -24,21 +24,22 @@ def create_logger(name: str) -> logging.Logger:
 
 class Timer:
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, logger: logging.Logger):
         self.name = name
+        self.logger = logger
 
     def __enter__(self):
         self.t_start = time.time()
 
     def __exit__(self, ex_type, ex_value, trace):
         self.t_end = time.time()
-        logger.debug(f"{self.name} : {self.t_end - self.t_start} sec")
+        self.logger.debug(f"{self.name} : {self.t_end - self.t_start} sec")
 
 
 def time_dec(func):
     def wrapper(*args, **kwargs):
-        print(f"start {func.__name__}")
-        with Timer(func.__name__):
+        logger = kwargs.get("logger", create_logger(func.__name__))
+        with Timer(func.__name__, logger):
             func(*args, **kwargs)
 
     return wrapper
@@ -57,7 +58,7 @@ if __name__ == "__main__":
 
     @time_dec
     def sample(logger: logging.Logger):
-        with Timer("base"):
+        with Timer("base", logger):
             logger.debug("start")
             time.sleep(1)
             logger.debug("end")

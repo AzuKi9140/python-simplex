@@ -109,28 +109,20 @@ def lp_simplex(A, b, c):
 
         nonbasis[s], basis[r] = basis[r], nonbasis[s]
 
+        if iter % 50 == 0:
+            print("iter: {}".format(iter))
+            print("current obj.val. = {}".format(x[basis] @ c0[basis]))
         iter += 1
 
-
 if __name__ == "__main__":
-    #A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
-    #b = np.array([4, 8, 6])
-    #c = np.array([3, 4, 2])
-    #lp_simplex(A, b, c)
+    # 例題
+    A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
+    b = np.array([4, 8, 6])
+    c = np.array([3, 4, 2])
+    lp_simplex(A, b, c)
 
+    # 巡回する例
     A = np.array([[1, 12, -2, -12], [0.25, 1, -0.25, -2], [1, -4, 0, -8]])
     b = np.array([0, 0, 1])
     c = np.array([1, -4, 0, -8])
     lp_simplex(A, b, c)
-
-    #A = np.array([[0.5, -5.5, -2.5, 9], [0.5, -1.5, -0.5, 1], [1, 0, 0, 0]])
-    #b = np.array([0, 0, 1])
-    #c = np.array([10, -57, -9, -25])
-    #lp_simplex(A, b, c)    
-
-    #n = 100
-    #m = 100
-    #A = np.random.rand(m, n) - np.random.rand(m, n)
-    #b = np.ones(m)
-    #c = np.ones(n)
-    #lp_simplex(A, b, c)

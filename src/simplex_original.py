@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
-from src.lib.settings import time_dec
+from .settings import time_dec
 
 error = 1.0e-10  # 許容誤差
 
@@ -101,7 +101,7 @@ def lp_simplex(A, b, c):
                 print("problem is unbounded")
                 break
 
-            # 出る変数の決定(最小添え字)
+            # 出る変数の決定
             ratio = []
             for i in range(len(d)):
                 if d[i] > error:
@@ -121,7 +121,7 @@ def lp_simplex(A, b, c):
             nonbasis[s], basis[r] = basis[r], nonbasis[s]
         
         else:
-            # 入る変数の決定(最大改善)
+            # 入る変数の決定(最大改善、最急降下)
             s_max_improvement = -1
             d_max_improvement = None
             max_improvement = -np.inf
