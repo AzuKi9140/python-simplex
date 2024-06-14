@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
-from .settings import time_dec
+from settings import time_dec
 
 error = 1.0e-10  # 許容誤差
 
@@ -73,7 +73,7 @@ def lp_simplex(A, b, c):
         # 最適性のチェック（双対可能性）
         if np.all(rc <= error):
             print("--optimal solution found---------------------------------------------------")
-            print_simplex_detail(iter=iter, basis=basis, nonbasis=nonbasis, rc=rc, x_b=x[basis])
+            print_simplex_detail(iter=iter)
             print("obj.val. = {}".format(c0[basis] @ x[basis]))
             print("x = {}".format(x))
             print("---------------------------------------------------------------------------")
@@ -116,74 +116,44 @@ def lp_simplex(A, b, c):
             # 最小添え字を持つインデックスを選択
             r = min(candidates_basis_index)
 
-            print_simplex_detail(iter=iter, basis=basis, nonbasis=nonbasis, rc=rc, d=d, s=s, r=r, x_b=x[basis])
-
             nonbasis[s], basis[r] = basis[r], nonbasis[s]
         
         else:
-            # 入る変数の決定(最大改善、最急降下)
-            s_max_improvement = -1
-            d_max_improvement = None
-            max_improvement = -np.inf
+            # 入る変数の決定(最急降下)
             s_steepest_edge = -1
             d_steepest_edge = None
             max_ratio = -np.inf
             for i in range(len(rc)):
                 if rc[i] > error:
                     tmp = lu_solve((LU, piv), Ai[:, nonbasis[i]])
-                    improvement = rc[i] / np.max(tmp)
                     norm = np.sqrt(1 + np.sum(tmp**2))
                     ratio = rc[i] / norm
-                    if improvement > max_improvement:
-                        max_improvement = improvement
-                        s_max_improvement = i
-                        d_max_improvement = tmp
 
                     if ratio > max_ratio:
                         max_ratio = ratio
                         s_steepest_edge = i
                         d_steepest_edge = tmp
 
-            if s_max_improvement == -1:
-                print("no entering variable found by maximum improvement, optimal solution found")
-                break
-
             if s_steepest_edge == -1:
                 print("no entering variable found by steepest edge, optimal solution found")
                 break            
 
-            # 非有界性のチェック
-            if np.all(d_max_improvement <= error) or np.all(d_steepest_edge <= error):
+            if np.all(d_steepest_edge <= error):
                 print("problem is unbounded")
                 break
 
-            # 最大改善規則で選んだ変数の比率を計算
-            ratio_max_improvement = []
-            for i in range(len(d_max_improvement)):
-                if d_max_improvement[i] > error:
-                    ratio_max_improvement.append(x[basis][i] / d_max_improvement[i])
-                else:
-                    ratio_max_improvement.append(np.inf)
-
             # 最急辺規則で選んだ変数の比率を計算
-            ratio_steepest_edge = []
+            ratio = []
             for i in range(len(d_steepest_edge)):
                 if d_steepest_edge[i] > error:
-                    ratio_steepest_edge.append(x[basis][i] / d_steepest_edge[i])
+                    ratio.append(x[basis][i] / d_steepest_edge[i])
                 else:
-                    ratio_steepest_edge.append(np.inf)
+                    ratio.append(np.inf)
 
             # 出る変数の決定
-            r_max_improvement = np.argmin(ratio_max_improvement)
-            r_steepest_edge = np.argmin(ratio_steepest_edge)
+            r_steepest_edge = np.argmin(ratio)
 
-            # 同じ変数が選ばれた場合、一回の入れ替えのみを行う
-            if s_max_improvement == s_steepest_edge:
-                r = min(r_max_improvement, r_steepest_edge)
-                nonbasis[s_max_improvement], basis[r] = basis[r], nonbasis[s_max_improvement]
-            else:
-                nonbasis[s_max_improvement], basis[r_max_improvement] = basis[r_max_improvement], nonbasis[s_max_improvement]
-                nonbasis[s_steepest_edge], basis[r_steepest_edge] = basis[r_steepest_edge], nonbasis[s_steepest_edge]
+            nonbasis[s_steepest_edge], basis[r_steepest_edge] = basis[r_steepest_edge], nonbasis[s_steepest_edge]
 
         if iter % 50 == 0:
             print("iter: {}".format(iter))
@@ -191,19 +161,31 @@ def lp_simplex(A, b, c):
         iter += 1
 
 if __name__ == "__main__":
-    #A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
-    #b = np.array([4, 8, 6])
-    #c = np.array([3, 4, 2])
-    #lp_simplex(A, b, c)
-
-    #A = np.array([[1, 12, -2, -12], [0.25, 1, -0.25, -2], [1, -4, 0, -8]])
-    #b = np.array([0, 0, 1])
-    #c = np.array([1, -4, 0, -8])
-    #lp_simplex(A, b, c)
-
-    n = 100
-    m = 100
-    A = np.random.rand(m, n) - np.random.rand(m, n)
-    b = np.ones(m)
-    c = np.ones(n)
+    # 例題
+    A = np.array([[2, 0, 0], [1, 0, 2], [0, 3, 1]])
+    b = np.array([4, 8, 6])
+    c = np.array([3, 4, 2])
     lp_simplex(A, b, c)
+
+    # 計測(karate)
+    A = np.loadtxt("./test_data/A_karate.txt", delimiter="\t")
+    m = len(A)
+    b = np.ones(m)
+    c = np.loadtxt("./test_data/c_karate.txt", delimiter="\t")
+    lp_simplex(A, b, c)
+    
+    # 計測(dolphins)
+    A = np.loadtxt("./test_data/A_dolphins.txt", delimiter="\t")
+    m = len(A)
+    b = np.ones(m)
+    c = np.loadtxt("./test_data/c_dolphins.txt", delimiter="\t")
+    lp_simplex(A, b, c)
+
+    # 計測(ランダム)
+    n = 300
+    m = 500
+    a = 0.1
+    b = 0.7
+    from matrix_generator import generate_random_lp_problem
+    A, b_vec, c_vec = generate_random_lp_problem(n, m, a, b)
+    lp_simplex(A, b_vec, c_vec)

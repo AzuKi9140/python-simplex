@@ -81,7 +81,6 @@ def lp_simplex(A, b, c):
         
         degenerate_indices = check_degeneracy(x[basis])
 
-        #退化の確認
         if degenerate_indices.size > 0:
             # 入る変数の決定(最小添え字)
             s = -1
@@ -94,6 +93,7 @@ def lp_simplex(A, b, c):
                 print("no entering variable found, optimal solution found")
                 break
 
+            #d = np.linalg.solve(Ai[:, basis], Ai[:, nonbasis[s]])
             d = lu_solve((LU, piv), Ai[:, nonbasis[s]])
 
             # 非有界性のチェック
@@ -119,48 +119,32 @@ def lp_simplex(A, b, c):
             nonbasis[s], basis[r] = basis[r], nonbasis[s]
         
         else:
-            # 入る変数と出る変数の決定(最大改善)
-            r_max_improvement = -1
-            s_max_improvement = -1
-            d_max_improvement = None
-            max_improvement = -np.inf
+            # 入る変数の決定(最大係数)
+            s_max_rc = np.argmax(rc)
+            d_max_rc = np.linalg.solve(
+                Ai[:, basis], Ai[:, nonbasis[s_max_rc]]
+            )
 
-            for i in range(len(rc)):
-                if rc[i] > error:
-                    try:
-                        tmp = lu_solve((LU, piv), Ai[:, nonbasis[i]])
-                    except np.linalg.LinAlgError:
-                        print(f"Skipping singular matrix for nonbasis index {i}")
-                        continue
-                    if np.all(tmp <= error):
-                        continue
-                    ratio = []
-                    for j in range(len(tmp)):
-                        if tmp[j] > error:
-                            ratio.append(x[basis][j] / tmp[j])
-                        else:
-                            ratio.append(np.inf)
-                    min_ratio_index = np.argmin(ratio)
-                    improvement = rc[i] * ratio[min_ratio_index]
-                    if improvement > max_improvement:
-                        max_improvement = improvement
-                        s_max_improvement = i
-                        d_max_improvement = tmp
-                        r_max_improvement = min_ratio_index
+            if s_max_rc == -1:
+                print("no entering variable found by steepest edge, optimal solution found")
+                break            
 
-            if s_max_improvement == -1:
-                print("no entering variable found by maximum improvement, optimal solution found")
-                break
-
-            if r_max_improvement == -1:
-                print("no entering variable found by maximum improvement, optimal solution found")
-                break
-
-            if np.all(d_max_improvement <= error):
+            if np.all(d_max_rc <= error):
                 print("problem is unbounded")
                 break
 
-            nonbasis[s_max_improvement], basis[r_max_improvement] = basis[r_max_improvement], nonbasis[s_max_improvement]
+            # 最急辺規則で選んだ変数の比率を計算
+            ratio = []
+            for i in range(len(d_max_rc)):
+                if d_max_rc[i] > error:
+                    ratio.append(x[basis][i] / d_max_rc[i])
+                else:
+                    ratio.append(np.inf)
+
+            # 出る変数の決定
+            r_max_rc = np.argmin(ratio)
+
+            nonbasis[s_max_rc], basis[r_max_rc] = basis[r_max_rc], nonbasis[s_max_rc]
 
         if iter % 50 == 0:
             print("iter: {}".format(iter))

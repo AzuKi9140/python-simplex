@@ -1,4 +1,5 @@
 import numpy as np
+from settings import time_dec
 
 error = 1.0e-10  # 許容誤差
 
@@ -36,8 +37,8 @@ def print_simplex_detail(
     if r is not None:
         print(f"r = {r}")
 
+@time_dec
 def lp_simplex(A, b, c):
-
     (m, n) = A.shape  # m:制約条件数, n:変数数
     print("m = {}, n = {}".format(m, n))
 
@@ -51,6 +52,8 @@ def lp_simplex(A, b, c):
     iter = 0
 
     while True:
+    # 巡回の確認の際に使用
+    #while iter < 10:
         # 基本解の計算
         x = np.zeros(n + m)
         x[basis] = np.linalg.solve(Ai[:, basis], b)
@@ -64,7 +67,7 @@ def lp_simplex(A, b, c):
         # 最適性のチェック（双対可能性）
         if np.all(rc <= error):
             print("--optimal solution found---------------------------------------------------")
-            print_simplex_detail(iter=iter, basis=basis, nonbasis=nonbasis, rc=rc, x_b=x[basis])
+            print_simplex_detail(iter=iter)
             print("obj.val. = {}".format(c0[basis] @ x[basis]))
             print("x = {}".format(x))
             print("---------------------------------------------------------------------------")
@@ -96,6 +99,9 @@ def lp_simplex(A, b, c):
         if iter % 50 == 0:
                 print("iter: {}".format(iter))
                 print("current obj.val. = {}".format(x[basis] @ c0[basis]))
+
+        # 巡回の確認の際に使用
+        #print_simplex_detail(iter=iter, basis=basis, nonbasis=nonbasis, rc=rc, d=d, s=s, r=r, x_b=x[basis])
         iter += 1
 
 if __name__ == "__main__":

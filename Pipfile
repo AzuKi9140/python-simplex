@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 numpy = "*"
 scipy = "*"
+mip = "*"
 
 [dev-packages]
 
@@ -14,7 +15,6 @@ mip = "python -m src.mip"
 sotui_mip = "python -m src.sotui_mip"
 steppest_edge = "python -m src.steppest_edge.main"
 maximum_coefficient_method_simplex = "python -m src.maximum_coefficient_method_simplex"
-
 
 [requires]
 python_version = "3.11"
